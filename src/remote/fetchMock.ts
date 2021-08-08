@@ -7,7 +7,10 @@ type Body = Pick<RequestInit, 'body'>
  */
 export function jsonResponse<R>(body: R): Response {
   const res = new Response(JSON.stringify(body), {
-    status: 200, statusText: "OK"
+    status: 200, statusText: "OK",
+    headers: {
+      'content-type': 'application/json'
+    }
   })
   return res
 }
@@ -24,7 +27,7 @@ type MockResponse = {
  * @returns
  */
 export function fetchMockBuilder() {
-  const responses = []
+  const responses: MockResponse[] = []
 
   return {
     onPostToOnce(url: string, withBody?: Body) {
@@ -44,6 +47,9 @@ export function fetchMockBuilder() {
           })
         }
       }
+    },
+    build() {
+      return responses;
     }
   }
 }
@@ -70,9 +76,8 @@ export function fetchMock(responses: MockResponse[]) {
       const matcherBody = possibleResponse.body
       if (!initBody && !matcherBody) {
         matches.push(possibleResponse)
-      } else if (initBody && matcherBody
-          && (Object.entries(initBody).sort().toString()
-            === Object.entries(matcherBody).sort().toString() )) {
+      } else if (input === possibleResponse.url
+          && method === possibleResponse.method ) {
         matches.push(possibleResponse)
       }
     }
@@ -85,6 +90,7 @@ export function fetchMock(responses: MockResponse[]) {
       }))
     }
     return Promise.resolve(new Response(null, {
+
       status: 404, statusText: 'Not Found!'
     }))
   }

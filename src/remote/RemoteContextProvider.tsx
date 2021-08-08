@@ -5,27 +5,31 @@ import { IWindowContext, useWindow}  from '../window/WindowContextProvider'
 function createRemoteContext(windowContext: IWindowContext): IRemoteContext {
 
   async function postj<R = unknown, B = unknown>(path: string, body?: B): Promise<R> {
-
-    const res = await windowContext.fetch(path, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body || {})
-    })
-    const resContentType = res.headers.get('content-type')
-    if (resContentType &&
-        (resContentType.indexOf('application/json') >= 0 ||
-         resContentType.indexOf('text/json') >= 0)) {
-      return await res.json() as Promise<R>
-    } else {
-      return Promise.reject('Response is not json type')
+    try {
+      const res = await windowContext.fetch(path, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body || {})
+      })
+      const resContentType = res.headers.get('content-type')
+      if (resContentType &&
+          (resContentType.indexOf('application/json') >= 0 ||
+          resContentType.indexOf('text/json') >= 0)) {
+        return res.json() as Promise<R>
+      } else {
+        return Promise.reject('Response is not json type')
+      }
+    } catch (e) {
+      console.error(e)
     }
+    return Promise.reject('Response is not json type')
   }
   async function getj<R = unknown>(path: string): Promise<R> {
     const res = await windowContext.fetch(path, {
-      method: 'POST',
+      method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -61,7 +65,6 @@ export function useRemoteContext() {
 
 export function RemoteContextProvider(props: WithChildrenProps) {
   const windowContext = useWindow()
-
   const remoteContextRef = React.useRef<IRemoteContext>(createRemoteContext(windowContext as IWindowContext))
   return (
     <RemoteContext.Provider value={remoteContextRef.current}>

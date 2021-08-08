@@ -2,7 +2,7 @@
 
 React Testify are set of context providers to make it easier to inject replacement of common global objects.
 
-Warning: early stage
+Warning: early stage and experimental af
 
 ## Example Usage
 

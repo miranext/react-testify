@@ -22,5 +22,14 @@ export function WindowContextProvider(props: Props) {
 
 export function useWindow() {
   // check type as we might be called from server
-  return React.useContext(WindowContext) || typeof window !== 'undefined' ? window : undefined
+  const context = React.useContext(WindowContext)
+  if (context) {
+    return context
+  }
+  // we could be rendered in backend
+  // return the actual window?
+  if (typeof window !== 'undefined') {
+    return window
+  }
+  return undefined as any as IWindowContext
 }
