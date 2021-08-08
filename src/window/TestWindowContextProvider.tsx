@@ -16,8 +16,9 @@ function createWindowProxy(partial : Partial<IWindowContext>): IWindowContext {
 
   return proxy
 }
+export type TestWindowContextProp = WithChildrenProps & Partial<IWindowContext>;
 
-export function TestWindowContextProvider(props: WithChildrenProps & Partial<IWindowContext>) {
+export function TestWindowContextProvider(props: TestWindowContextProp) {
   const { children, ...partialWindow } = props
   const windowContextRef = React.useRef(createWindowProxy(partialWindow))
 

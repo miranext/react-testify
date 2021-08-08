@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { WithChildrenProps } from '../types'
 import { IWindowContext, useWindow}  from '../window/WindowContextProvider'
 
 function createRemoteContext(windowContext: IWindowContext): IRemoteContext {
@@ -54,18 +55,14 @@ interface IRemoteContext {
 
 export const RemoteContext = React.createContext<IRemoteContext>(undefined as any as IRemoteContext)
 
-interface Props {
-  children?: React.ReactNode
-}
-
 export function useRemoteContext() {
   return React.useContext(RemoteContext)
 }
 
-export function RemoteContextProvider(props: Props) {
+export function RemoteContextProvider(props: WithChildrenProps) {
   const windowContext = useWindow()
-  console.log("?? windiw cotext ", windowContext)
-  const remoteContextRef = React.useRef<IRemoteContext>(createRemoteContext(windowContext))
+
+  const remoteContextRef = React.useRef<IRemoteContext>(createRemoteContext(windowContext as IWindowContext))
   return (
     <RemoteContext.Provider value={remoteContextRef.current}>
       { props.children }
