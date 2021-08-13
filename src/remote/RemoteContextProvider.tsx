@@ -4,8 +4,9 @@ import { IWindowContext, useWindow}  from '../window/WindowContextProvider'
 
 function createRemoteContext(windowContext: IWindowContext): IRemoteContext {
 
-  async function postj<R = unknown, B = unknown>(path: string, body?: B): Promise<R> {
+  async function post<R = unknown, B = unknown>(path: string, body?: B): Promise<R> {
     try {
+
       const res = await windowContext.fetch(path, {
         method: 'POST',
         headers: {
@@ -27,7 +28,7 @@ function createRemoteContext(windowContext: IWindowContext): IRemoteContext {
     }
     return Promise.reject('Response is not json type')
   }
-  async function getj<R = unknown>(path: string): Promise<R> {
+  async function get<R = unknown>(path: string): Promise<R> {
     const res = await windowContext.fetch(path, {
       method: 'GET',
       headers: {
@@ -45,25 +46,23 @@ function createRemoteContext(windowContext: IWindowContext): IRemoteContext {
     }
   }
   return {
-    postj,
-    getj,
-    fetch: typeof window !== 'undefined' ? windowContext.fetch : undefined as any
+    post,
+    get
   }
 }
 
 interface IRemoteContext {
-  postj<R = unknown, B = unknown>(path: string, body?: B): Promise<R>
-  getj<R = unknown>(path: string): Promise<R>
-  fetch(input: RequestInfo, init?: RequestInit): Promise<Response>
+  post<R = unknown, B = unknown>(path: string, body?: B): Promise<R>
+  get<R = unknown>(path: string): Promise<R>
 }
 
 export const RemoteContext = React.createContext<IRemoteContext>(undefined as any as IRemoteContext)
 
-export function useRemoteContext() {
+export function useRemoteContext(): IRemoteContext {
   return React.useContext(RemoteContext)
 }
 
-export function RemoteContextProvider(props: WithChildrenProps) {
+export function RemoteContextProvider(props: WithChildrenProps): React.ReactElement {
   const windowContext = useWindow()
   const remoteContextRef = React.useRef<IRemoteContext>(createRemoteContext(windowContext as IWindowContext))
   return (

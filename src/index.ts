@@ -1,5 +1,3 @@
 export { useRemoteContext, RemoteContextProvider } from './remote/RemoteContextProvider'
-export { fetchMock, fetchMockBuilder } from './remote/fetchMock'
 export { TestWindowContextProvider } from './window/TestWindowContextProvider'
 export { WindowContextProvider, WindowContext, useWindow } from './window/WindowContextProvider'
-export { WithChildrenProps } from './types'

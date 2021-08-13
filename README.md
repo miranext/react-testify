@@ -58,28 +58,44 @@ Now to test we can use the TestWindowContextProvider to provide any partial impl
   // file: EventListener.test.ts
   import { render, screen } from '@testing-ibrary/react'
   import { EventListener } from '../component/EventListner'
+  import fetchMock from 'fetch-mock'
 
   describe('EventListener', () => {
 
     it('renders events as it comes', () => {
 
-      // example api from your fetch mock implementation
-      const fetchMock = createFetchMock()
-      fetchMock
-        .onGet('/api/items')
-        .return([{ id: '1', name: 'Item 1' }])
+    const fetch = fetchMock.sandbox()
+
+    const updateMock = fetch.mock('/api/company/update',{
+      code: 0, data: {
+        _id: 'b1',
+        name: 'My New CompanyName'
+      }
+    })
 
       render(
-        <TestWindowContextProvider fetch={fetchMock.build()}>
-          <EventListener />
+        <TestWindowContextProvider fetch={fetch}>
+          <MyComponent />
         </TestWindowContextProvider>
       )
 
-      await screen.findByText('Item 1')
+      await screen.findByText('Name updated to My New CompanyName')
     })
   })
 
 
+```
+
+## Nextjs
+
+To test mock nextjs router
+
+import { RouterContextTestProvider } from 'react-testify/next/RouterContextTestProvider';
+
+```
+   <RouterContextTestProvider router={{ basePath: '/some/path' }}>
+      <MyComponent >
+   </RouterContextTestProvider>
 ```
 
 
