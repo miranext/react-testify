@@ -8,8 +8,6 @@ export function WebSocketContextProvider(props: { children: React.ReactNode }) {
 
   const possibleWindow = (typeof global !== 'undefined' ? window : {}) as typeof globalThis
 
-
-  possibleWindow
   return (
     <WebSocketContext.Provider value={possibleWindow.WebSocket}>
       {props.children}
