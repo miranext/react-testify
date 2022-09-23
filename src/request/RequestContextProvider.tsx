@@ -50,10 +50,27 @@ function handleResponse<R = unknown>(res: Response) {
   }
 }
 
-function createReqBodyActionHandler<R = unknown, B = unknown, P extends string = string>(actionKey: AvailableAction, windowContext: IWindowContext): WithBodyAction<R, B, P> {
+function getFetch(ctx?: IWindowContext) {
 
+  if (ctx) { // get from context as default
+    return ctx.fetch
+  }
+
+  if (!ctx && typeof window !== 'undefined') {
+    // no window context provider,
+    return window.fetch
+  }
+  if (!ctx && typeof global !== 'undefined') {
+    return global.fetch
+  }
+
+  throw new Error('Unable to determine fetch to use.')
+}
+
+function createReqBodyActionHandler<R = unknown, B = unknown, P extends string = string>(actionKey: AvailableAction, windowContext: IWindowContext): WithBodyAction<R, B, P> {
+  // we should fallback to global
   return async (path, body) => {
-    const res = await windowContext.fetch(path, createRequestInit(Actions[actionKey], body || {}))
+    const res = await getFetch(windowContext)(path, createRequestInit(Actions[actionKey], body || {}))
     return handleResponse(res)
   }
 }
@@ -61,7 +78,7 @@ function createReqBodyActionHandler<R = unknown, B = unknown, P extends string =
 function createGetHandler<R = unknown, P extends string = string>(windowContext: IWindowContext): GetAction<R, P> {
 
   return async (path) => {
-    return handleResponse( await windowContext.fetch(path, createRequestInit(Actions.get)))
+    return handleResponse( await getFetch(windowContext)(path, createRequestInit(Actions.get)))
   }
 }
 

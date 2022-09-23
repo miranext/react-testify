@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react",
-    "outDir": "dist",
+    "outDir": "dist/esm",
     "declaration": true
   },
   "include": ["src/**/*"]

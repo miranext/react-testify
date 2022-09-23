@@ -1,6 +1,6 @@
 {
   "name": "react-testify",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "description": "",
   "scripts": {
     "test": "vitest",
@@ -19,11 +19,6 @@
     "typescript": "^4.3.5",
     "vitest": "^0.23.4"
   },
-  "main": "./dist/cjs/index.js",
-  "module": "./index.js",
-  "peerDependencies": {
-    "next": "^11.1.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
-  }
+  "main": "./index.js",
+  "module": "./dist/esm/index.js"
 }
