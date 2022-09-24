@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createRequestContext } from '../../src/request/RequestContextProvider'
+import { describe, expect, it, vi } from 'vitest'
+import { createRequest, createRequestViaWindow } from '../../src/request/RequestContextProvider'
 import { IWindowContext } from '../../src/window/WindowContextProvider'
 
 describe('request context tests', () => {
@@ -7,12 +7,7 @@ describe('request context tests', () => {
   it('any unexpected error is caught and rethrown', async () => {
     const fetch = vi.fn()
 
-    const windowCtx = {
-      fetch
-    } as any as IWindowContext
-
-
-    const api = createRequestContext(windowCtx)
+    const api = createRequest(() => fetch)
     const vals = Object.values(api)
 
     for (const fn of vals) {
@@ -25,8 +20,8 @@ describe('request context tests', () => {
     }
   })
 
-  it.only('passes body as stringified and return json body', async () => {
-    const fetch = async () => {
+  it('passes body as stringified and return json body', async () => {
+    const fetchMock = async () => {
       return {
         headers: {
           get() {
@@ -40,7 +35,7 @@ describe('request context tests', () => {
     }
 
     const windowCtx = {
-      fetch
+      fetch: fetchMock
     } as any as IWindowContext
 
     const fetchSpy = vi.spyOn(windowCtx, 'fetch')
@@ -50,7 +45,7 @@ describe('request context tests', () => {
       "Accept": "application/json",
       "Content-Type": "application/json",
     }
-    const api = createRequestContext(windowCtx)
+    const api = createRequestViaWindow(windowCtx)
     const vals = Object.keys(api).filter(m => m !== 'get').sort().map(key => api[key])
 
     const calls = fetchSpy.mock.calls

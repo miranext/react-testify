@@ -5,7 +5,7 @@ interface Props {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export type IWindowContext = Window
+export type IWindowContext = Window & typeof globalThis
 
 export const WindowContext = React.createContext<IWindowContext>(undefined as unknown as IWindowContext)
 

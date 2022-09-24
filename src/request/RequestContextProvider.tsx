@@ -2,12 +2,16 @@ import * as React from 'react'
 import { WithChildrenProps } from '../types'
 import { IWindowContext, useWindow}  from '../window/WindowContextProvider'
 
-function createRequestInit<B = any>(method: string = 'GET', body?: B) {
+type HeaderEnricher = () => HeadersInit
+
+function createRequestInit<B = any>(method: string = 'GET', body?: B, headerEnricher?: HeaderEnricher) {
+  const enrichedHeaders = headerEnricher ? headerEnricher() : {}
   const requestInit: RequestInit = {
     method,
     headers: {
       Accept: 'application/json',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...enrichedHeaders
     }
   }
   if (body) {
@@ -50,7 +54,7 @@ function handleResponse<R = unknown>(res: Response) {
   }
 }
 
-function getFetch(ctx?: IWindowContext) {
+function getFetch(ctx?: IWindowContext): FetchType {
 
   if (ctx) { // get from context as default
     return ctx.fetch
@@ -67,33 +71,43 @@ function getFetch(ctx?: IWindowContext) {
   throw new Error('Unable to determine fetch to use.')
 }
 
-function createReqBodyActionHandler<R = unknown, B = unknown, P extends string = string>(actionKey: AvailableAction, windowContext: IWindowContext): WithBodyAction<R, B, P> {
+function createReqBodyActionHandler<R = unknown, B = unknown, P extends string = string>(actionKey: AvailableAction, fetchProvider: FetchProvider, headerEnricher?: HeaderEnricher): WithBodyAction<R, B, P> {
   // we should fallback to global
   return async (path, body) => {
-    const res = await getFetch(windowContext)(path, createRequestInit(Actions[actionKey], body || {}))
+    const fetchProvided = fetchProvider()
+    const res = await fetchProvided(path, createRequestInit(Actions[actionKey], body || {}, headerEnricher))
     return handleResponse(res)
   }
 }
 
-function createGetHandler<R = unknown, P extends string = string>(windowContext: IWindowContext): GetAction<R, P> {
+function createGetHandler<R = unknown, P extends string = string>(fetchProvider: FetchProvider, headerEnricher?: HeaderEnricher): GetAction<R, P> {
 
   return async (path) => {
-    return handleResponse( await getFetch(windowContext)(path, createRequestInit(Actions.get)))
+    const fetchProvided = fetchProvider()
+    return handleResponse( await fetchProvided(path, createRequestInit(Actions.get, undefined, headerEnricher)))
   }
 }
 
-export function createRequestContext(windowContext: IWindowContext): IRequestContext {
+export function createRequestViaWindow(windowContext: IWindowContext): Request {
+  return createRequest(() => {
+    return  getFetch(windowContext)
+  })
+}
+type FetchType = typeof fetch
+type FetchProvider = () => FetchType
+
+export function createRequest(fetchProvider: FetchProvider, headerEnricher?: HeaderEnricher): Request {
 
   return {
-    post: createReqBodyActionHandler('post', windowContext),
-    put: createReqBodyActionHandler('put', windowContext),
-    delete: createReqBodyActionHandler('delete', windowContext),
-    patch: createReqBodyActionHandler('patch', windowContext),
-    get: createGetHandler(windowContext)
+    post: createReqBodyActionHandler('post', fetchProvider, headerEnricher),
+    put: createReqBodyActionHandler('put', fetchProvider, headerEnricher),
+    delete: createReqBodyActionHandler('delete', fetchProvider, headerEnricher),
+    patch: createReqBodyActionHandler('patch', fetchProvider, headerEnricher),
+    get: createGetHandler(fetchProvider, headerEnricher)
   }
 }
 
-interface IRequestContext {
+export interface Request {
   post: WithBodyAction
   put: WithBodyAction
   delete: WithBodyAction
@@ -101,15 +115,15 @@ interface IRequestContext {
   get<R = unknown, P extends string = string>(path: P): Promise<R>
 }
 
-export const RequestContext = React.createContext<IRequestContext>(undefined as any as IRequestContext)
+export const RequestContext = React.createContext<Request>(undefined as any as Request)
 
-export function useRequestContext(): IRequestContext {
+export function useRequestContext(): Request {
   return React.useContext(RequestContext)
 }
 
 export function RequestContextProvider(props: WithChildrenProps): React.ReactElement {
   const windowContext = useWindow()
-  const requestContextRef = React.useRef<IRequestContext>(createRequestContext(windowContext as IWindowContext))
+  const requestContextRef = React.useRef<Request>(createRequestViaWindow(windowContext))
   return (
     <RequestContext.Provider value={requestContextRef.current}>
       { props.children }
