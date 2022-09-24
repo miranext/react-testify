@@ -3,6 +3,13 @@ import { WithChildrenProps } from '../types'
 import { IWindowContext, useWindow}  from '../window/WindowContextProvider'
 
 type HeaderEnricher = () => Promise<HeadersInit>
+type PathEnricher = (path: string) => Promise<string>
+
+type RequestEnricher = {
+  header?: HeaderEnricher
+  path?: PathEnricher
+}
+
 
 async function createRequestInit<B = any>(method: string = 'GET', body?: B, headerEnricher?: HeaderEnricher) {
   const enrichedHeaders = headerEnricher ? await headerEnricher() : {}
@@ -71,22 +78,23 @@ function getFetch(ctx?: IWindowContext): FetchType {
   throw new Error('Unable to determine fetch to use.')
 }
 
-function createReqBodyActionHandler<R = unknown, B = unknown, P extends string = string>(actionKey: AvailableAction, fetchProvider: FetchProvider, headerEnricher?: HeaderEnricher): WithBodyAction<R, B, P> {
-  // we should fallback to global
+function createReqBodyActionHandler<R = unknown, B = unknown, P extends string = string>(actionKey: AvailableAction, fetchProvider: FetchProvider, enricher?: RequestEnricher): WithBodyAction<R, B, P> {
   return async (path, body) => {
     const fetchProvided = fetchProvider()
-    const requestInit = await createRequestInit(Actions[actionKey], body || {}, headerEnricher)
-    const res = await fetchProvided(path, requestInit)
+    const requestInit = await createRequestInit(Actions[actionKey], body || {}, enricher ? enricher.header : undefined)
+    const enrichedPath = enricher && enricher.path ? await enricher.path(path) : path
+    const res = await fetchProvided(enrichedPath, requestInit)
     return handleResponse(res)
   }
 }
 
-function createGetHandler<R = unknown, P extends string = string>(fetchProvider: FetchProvider, headerEnricher?: HeaderEnricher): GetAction<R, P> {
+function createGetHandler<R = unknown, P extends string = string>(fetchProvider: FetchProvider, enricher?: RequestEnricher): GetAction<R, P> {
 
   return async (path) => {
     const fetchProvided = fetchProvider()
-    const requestInit = await createRequestInit(Actions.get, undefined, headerEnricher)
-    const res = await fetchProvided(path, requestInit)
+    const requestInit = await createRequestInit(Actions.get, undefined, enricher ? enricher.header : undefined)
+    const enrichedPath = enricher && enricher.path ? await enricher.path(path) : path
+    const res = await fetchProvided(enrichedPath, requestInit)
     return handleResponse(res)
   }
 }
@@ -99,14 +107,14 @@ export function createRequestViaWindow(windowContext: IWindowContext): Request {
 type FetchType = typeof fetch
 type FetchProvider = () => FetchType
 
-export function createRequest(fetchProvider: FetchProvider, headerEnricher?: HeaderEnricher): Request {
+export function createRequest(fetchProvider: FetchProvider, enricher?: RequestEnricher): Request {
 
   return {
-    post: createReqBodyActionHandler('post', fetchProvider, headerEnricher),
-    put: createReqBodyActionHandler('put', fetchProvider, headerEnricher),
-    delete: createReqBodyActionHandler('delete', fetchProvider, headerEnricher),
-    patch: createReqBodyActionHandler('patch', fetchProvider, headerEnricher),
-    get: createGetHandler(fetchProvider, headerEnricher)
+    post: createReqBodyActionHandler('post', fetchProvider, enricher),
+    put: createReqBodyActionHandler('put', fetchProvider, enricher),
+    delete: createReqBodyActionHandler('delete', fetchProvider, enricher),
+    patch: createReqBodyActionHandler('patch', fetchProvider, enricher),
+    get: createGetHandler(fetchProvider, enricher)
   }
 }
 
