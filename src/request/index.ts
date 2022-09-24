@@ -1,1 +1,8 @@
-export { useRequestContext, RequestContextProvider, RequestContext, createRequest as createRequestContext } from './RequestContextProvider'
+export {
+  Request,
+  useRequestContext,
+  RequestContextProvider,
+  RequestContext,
+  createRequest,
+} from "./RequestContextProvider";
+
