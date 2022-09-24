@@ -4,5 +4,6 @@ export {
   RequestContextProvider,
   RequestContext,
   createRequest,
+  RequestEnricher
 } from "./RequestContextProvider";
 

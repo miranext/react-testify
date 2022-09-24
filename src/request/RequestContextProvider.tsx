@@ -5,7 +5,7 @@ import { IWindowContext, useWindow}  from '../window/WindowContextProvider'
 type HeaderEnricher = () => Promise<HeadersInit>
 type PathEnricher = (path: string) => Promise<string>
 
-type RequestEnricher = {
+export type RequestEnricher = {
   header?: HeaderEnricher
   path?: PathEnricher
 }
