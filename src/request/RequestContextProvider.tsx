@@ -2,10 +2,10 @@ import * as React from 'react'
 import { WithChildrenProps } from '../types'
 import { IWindowContext, useWindow}  from '../window/WindowContextProvider'
 
-type HeaderEnricher = () => HeadersInit
+type HeaderEnricher = () => Promise<HeadersInit>
 
-function createRequestInit<B = any>(method: string = 'GET', body?: B, headerEnricher?: HeaderEnricher) {
-  const enrichedHeaders = headerEnricher ? headerEnricher() : {}
+async function createRequestInit<B = any>(method: string = 'GET', body?: B, headerEnricher?: HeaderEnricher) {
+  const enrichedHeaders = headerEnricher ? await headerEnricher() : {}
   const requestInit: RequestInit = {
     method,
     headers: {
@@ -75,7 +75,8 @@ function createReqBodyActionHandler<R = unknown, B = unknown, P extends string =
   // we should fallback to global
   return async (path, body) => {
     const fetchProvided = fetchProvider()
-    const res = await fetchProvided(path, createRequestInit(Actions[actionKey], body || {}, headerEnricher))
+    const requestInit = await createRequestInit(Actions[actionKey], body || {}, headerEnricher)
+    const res = await fetchProvided(path, requestInit)
     return handleResponse(res)
   }
 }
@@ -84,7 +85,9 @@ function createGetHandler<R = unknown, P extends string = string>(fetchProvider:
 
   return async (path) => {
     const fetchProvided = fetchProvider()
-    return handleResponse( await fetchProvided(path, createRequestInit(Actions.get, undefined, headerEnricher)))
+    const requestInit = await createRequestInit(Actions.get, undefined, headerEnricher)
+    const res = await fetchProvided(path, requestInit)
+    return handleResponse(res)
   }
 }
 
